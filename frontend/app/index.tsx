@@ -1,30 +1,22 @@
-import { Text, View, StyleSheet, Image } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { Redirect } from "expo-router";
 
-const EXPO_PUBLIC_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+import { useAuth, useTheme } from "@/src/lib/app";
 
 export default function Index() {
-  console.log(EXPO_PUBLIC_BACKEND_URL, "EXPO_PUBLIC_BACKEND_URL");
+  const { user, loading } = useAuth();
+  const { palette } = useTheme();
 
-  return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/app-image.png")}
-        style={styles.image}
-      />
-    </View>
-  );
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: palette.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={palette.primary} size="large" />
+      </View>
+    );
+  }
+
+  if (!user) return <Redirect href="/login" />;
+  if (!user.role) return <Redirect href="/role-select" />;
+  return <Redirect href="/(tabs)/dashboard" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0c0c0c",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
-  },
-});
