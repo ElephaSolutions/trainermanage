@@ -1,0 +1,41 @@
+{
+  "summary": "Backend re-test after Stripe refactor (emergentintegrations). 20/21 pytest passed. POST /api/payments/checkout NOW works end-to-end and returns 200 with a real checkout.stripe.com URL + txn_id (previously skipped/blocked, now confirmed passing). However GET /api/payments/checkout/{txn_id} is BUGGY: it returns status='failed' when the review request explicitly requires 'pending' for not-yet-completed payments. Root cause: server.py line 661 maps Stripe payment_status=='unpaid' to 'failed', but on an OPEN Stripe Checkout session 'unpaid' simply means the user has not paid yet — it is the pending state. All other sanity-check endpoints (auth/dev-login, /sessions, /attendance/mark+self, /payment-plans, /payments/record, /feedback, /dashboard for all 3 roles, /notifications) pass green.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/payments/checkout/{txn_id}", "issue": "Returns status='failed' instead of 'pending' for an open (unpaid, not-yet-completed) Stripe Checkout session. Stripe Checkout's payment_status is 'unpaid' until the user actually completes payment on the hosted page — it does NOT mean the payment failed. Failure should only be reported when the session has been completed/expired. Fix at /app/backend/server.py:661 — currently `new_status = 'paid' if ps == 'paid' else ('failed' if ps == 'unpaid' else txn['status'])`. Suggested replacement: also read `s.status` ('open'|'complete'|'expired') and use it: `if ps == 'paid': new_status='paid' elif getattr(s,'status',None) == 'expired': new_status='failed' else: new_status='pending'`. Reproduction: POST /api/payments/checkout (student) -> 200 + txn_id; GET /api/payments/checkout/{txn_id} without completing the Stripe page -> body.status == 'failed' (expected 'pending').", "priority": "HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Student → Pay Online (status polling)", "issue": "After redirecting back from Stripe checkout (or polling while user is still on Stripe page), the Payments screen will see status='failed' immediately, even though the user hasn't actually failed — they're either still paying or returned without completing. Likely results in misleading 'Payment Failed' banner.", "affected_testIDs": ["pay-{plan_id}", "payment-banner"]}
+    ],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_trainertrack_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "HIGH: Fix /app/backend/server.py line ~661 in checkout_status() — do not map Stripe payment_status='unpaid' directly to 'failed'. Use Stripe session.status (open|complete|expired) together with payment_status. Recommended mapping: ps=='paid' -> 'paid'; session.status=='expired' -> 'failed'; otherwise keep/return 'pending'. After the fix, rerun /app/backend/tests/test_trainertrack_api.py::TestPayments::test_checkout_status — it should pass.",
+    "Optionally update the frontend Payments screen to treat 'pending' (the corrected status) as 'in progress' rather than failure, and only show 'Failed' for explicit failed/expired transactions."
+  ],
+  "critical_code_review_comments": [
+    "server.py:661 — Stripe state machine flattened to two outcomes (paid|failed) loses the legitimate 'pending' state and misreports open sessions as failed. This is a semantic bug, not just a label issue.",
+    "server.py still >850 lines (single file). Recommend modular split (auth/sessions/attendance/payments/feedback/dashboards) as already noted in iteration_1.",
+    "Still using deprecated FastAPI @app.on_event('startup'/'shutdown') — migrate to lifespan context manager."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_trainertrack_api.py (tightened TestPayments::test_checkout_status to assert status=='pending' as per review request, plus assert stripe_session_id starts with 'cs_' and plan_id/txn_id round-trip)",
+    "/app/test_reports/pytest/pytest_results.xml (regenerated)",
+    "/app/test_reports/iteration_2.json (new)"
+  ],
+  "success_rate": {"backend": "95% (20/21 pytest cases pass; 1 fails — GET /payments/checkout/{txn_id} returns 'failed' instead of required 'pending')", "frontend": "not retested this iteration (backend-only request)"},
+  "seed_data_creation": "Tests create TEST_* prefixed users (admin/trainer/student) per run and one TEST session + attendance + payment + feedback records under those test users. Stripe checkout creates a real cs_test_* session against the Emergent Stripe proxy.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "After main agent fixes server.py:661 to map open Stripe sessions to 'pending' instead of 'failed', rerun /app/backend/tests/test_trainertrack_api.py. Only TestPayments::test_checkout_status is currently failing — all other 20 tests are green, including the new Stripe checkout endpoint which now returns a real checkout.stripe.com URL via emergentintegrations (the previous 500 error is fully resolved).",
+  "rca_of_issue": "Stripe Checkout Sessions expose TWO state fields: session.status ∈ {open, complete, expired} and session.payment_status ∈ {paid, unpaid, no_payment_required}. While the user is still on the hosted checkout page (or hasn't gone there yet), session.status='open' and session.payment_status='unpaid' — this is the normal PENDING state. The current backend at server.py:661 conflates payment_status='unpaid' with terminal failure, so every just-created transaction immediately appears as 'failed' on GET. Fix: branch on session.status first ('expired' -> 'failed', else if payment_status=='paid' -> 'paid', else 'pending'). Reproduction is captured in TestPayments::test_checkout_status which now asserts the contract from the review request."
+}

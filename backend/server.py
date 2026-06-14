@@ -10,8 +10,11 @@ from pathlib import Path
 from typing import Optional, List, Literal
 
 import httpx
-import stripe
 from dotenv import load_dotenv
+from emergentintegrations.payments.stripe.checkout import (
+    CheckoutSessionRequest,
+    StripeCheckout,
+)
 from fastapi import FastAPI, APIRouter, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -23,7 +26,7 @@ load_dotenv(ROOT_DIR / ".env")
 mongo_url = os.environ["MONGO_URL"]
 db_name = os.environ["DB_NAME"]
 stripe_api_key = os.environ.get("STRIPE_API_KEY", "")
-stripe.api_key = stripe_api_key
+stripe_client = StripeCheckout(api_key=stripe_api_key) if stripe_api_key else None
 
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
@@ -600,40 +603,27 @@ async def stripe_checkout(body: CheckoutIn, authorization: Optional[str] = Heade
     plan = await db.payment_plans.find_one({"plan_id": body.plan_id}, {"_id": 0})
     if not plan:
         raise HTTPException(404, "Plan not found")
-    if not stripe.api_key:
+    if not stripe_client:
         raise HTTPException(500, "Stripe not configured")
 
-    # Convert amount to lowest currency unit (paise for INR)
-    amount_minor = int(round(plan["amount"] * 100))
     txn_id = new_id("txn")
-
-    success_url = f"{body.origin}/payments?status=success&txn={txn_id}"
+    success_url = f"{body.origin}/payments?status=success&txn={txn_id}&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{body.origin}/payments?status=cancelled&txn={txn_id}"
 
     try:
-        session = stripe.checkout.Session.create(
-            mode="payment",
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": plan["currency"].lower(),
-                        "product_data": {
-                            "name": plan["name"],
-                            "description": plan.get("description") or plan["interval"],
-                        },
-                        "unit_amount": amount_minor,
-                    },
-                    "quantity": 1,
-                }
-            ],
+        req = CheckoutSessionRequest(
+            amount=float(plan["amount"]),
+            currency=plan["currency"].lower(),
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={
                 "txn_id": txn_id,
                 "plan_id": plan["plan_id"],
                 "student_id": user["user_id"],
+                "plan_name": plan["name"],
             },
         )
+        session = await stripe_client.create_checkout_session(req)
     except Exception as e:
         log.exception("Stripe error")
         raise HTTPException(500, f"Stripe error: {e}")
@@ -641,7 +631,7 @@ async def stripe_checkout(body: CheckoutIn, authorization: Optional[str] = Heade
     await db.payment_transactions.insert_one(
         {
             "txn_id": txn_id,
-            "stripe_session_id": session.id,
+            "stripe_session_id": session.session_id,
             "student_id": user["user_id"],
             "plan_id": plan["plan_id"],
             "plan_name": plan["name"],
@@ -651,7 +641,7 @@ async def stripe_checkout(body: CheckoutIn, authorization: Optional[str] = Heade
             "created_at": now_utc(),
         }
     )
-    return {"checkout_url": session.url, "txn_id": txn_id, "session_id": session.id}
+    return {"checkout_url": session.url, "txn_id": txn_id, "session_id": session.session_id}
 
 
 @api.get("/payments/checkout/{txn_id}")
@@ -664,7 +654,9 @@ async def checkout_status(txn_id: str, authorization: Optional[str] = Header(Non
         raise HTTPException(403, "Not yours")
     # Refresh from Stripe
     try:
-        s = stripe.checkout.Session.retrieve(txn["stripe_session_id"])
+        if not stripe_client:
+            raise RuntimeError("Stripe not configured")
+        s = await stripe_client.get_checkout_status(txn["stripe_session_id"])
         ps = s.payment_status  # 'paid' | 'unpaid' | 'no_payment_required'
         new_status = "paid" if ps == "paid" else ("failed" if ps == "unpaid" else txn["status"])
         if new_status != txn["status"]:

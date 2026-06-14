@@ -185,7 +185,13 @@ class TestPayments:
             pytest.skip("No checkout txn to verify")
         r = session_http.get(f"{API}/payments/checkout/{pytest.TXN_ID}", headers=student_ctx["headers"])
         assert r.status_code == 200
-        assert r.json()["status"] in {"pending", "paid", "failed"}
+        body = r.json()
+        # Per review request: txn must report 'pending' since payment was not completed in tests.
+        # Stripe payment_status='unpaid' on an OPEN session means "not yet paid", not "failed".
+        assert body["status"] == "pending", f"Expected 'pending' but got '{body['status']}' — backend likely maps Stripe payment_status=unpaid to 'failed' incorrectly. Full body: {body}"
+        assert body["txn_id"] == pytest.TXN_ID
+        assert body["plan_id"] == pytest.SEED_PLAN_ID
+        assert "stripe_session_id" in body and body["stripe_session_id"].startswith("cs_")
 
     def test_trainer_record_manual_payment(self, session_http, trainer_ctx, student_ctx):
         # get a plan
