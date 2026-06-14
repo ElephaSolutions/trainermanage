@@ -118,7 +118,7 @@ export default function Dashboard() {
           <>
             <View style={s.row}>
               <KpiTile label={t("attendance_pct")} value={`${kpis.attendance_pct ?? 0}%`} testID="kpi-attendance" />
-              <KpiTile label={t("today_streak")} value={kpis.attended ?? 0} testID="kpi-streak" />
+              <KpiTile label={t("today_streak")} value={kpis.attended ?? 0} testID="kpi-attended" />
             </View>
             <View style={{ height: 12 }} />
             <View style={s.row}>

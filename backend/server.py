@@ -657,8 +657,14 @@ async def checkout_status(txn_id: str, authorization: Optional[str] = Header(Non
         if not stripe_client:
             raise RuntimeError("Stripe not configured")
         s = await stripe_client.get_checkout_status(txn["stripe_session_id"])
-        ps = s.payment_status  # 'paid' | 'unpaid' | 'no_payment_required'
-        new_status = "paid" if ps == "paid" else ("failed" if ps == "unpaid" else txn["status"])
+        ps = s.payment_status
+        sess_status = getattr(s, "status", None)
+        if ps == "paid":
+            new_status = "paid"
+        elif sess_status == "expired":
+            new_status = "failed"
+        else:
+            new_status = "pending"
         if new_status != txn["status"]:
             await db.payment_transactions.update_one(
                 {"txn_id": txn_id}, {"$set": {"status": new_status, "updated_at": now_utc()}}
