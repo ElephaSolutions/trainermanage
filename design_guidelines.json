@@ -1,0 +1,139 @@
+{
+  "theme": "Light & Dark",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "colors": {
+    "light": {
+      "background": "#FFFFFF",
+      "surface": "#F4F4F5",
+      "surface_elevated": "#E4E4E7",
+      "primary": "#0055FF",
+      "primary_foreground": "#FFFFFF",
+      "danger": "#FF2E00",
+      "danger_foreground": "#FFFFFF",
+      "warning": "#FFC000",
+      "warning_foreground": "#09090B",
+      "success": "#00C366",
+      "success_foreground": "#FFFFFF",
+      "border": "#09090B",
+      "text_primary": "#09090B",
+      "text_secondary": "#71717A"
+    },
+    "dark": {
+      "background": "#09090B",
+      "surface": "#18181B",
+      "surface_elevated": "#27272A",
+      "primary": "#3377FF",
+      "primary_foreground": "#FFFFFF",
+      "danger": "#FF4D26",
+      "danger_foreground": "#FFFFFF",
+      "warning": "#FFD133",
+      "warning_foreground": "#09090B",
+      "success": "#00E075",
+      "success_foreground": "#09090B",
+      "border": "#52525B",
+      "text_primary": "#FAFAFA",
+      "text_secondary": "#A1A1AA"
+    }
+  },
+  "typography": {
+    "font_families": {
+      "heading": "Outfit",
+      "body": "IBM Plex Sans"
+    },
+    "scales": {
+      "h1": "text-4xl font-black tracking-tighter",
+      "h2": "text-3xl font-bold tracking-tight",
+      "h3": "text-2xl font-bold tracking-tight",
+      "h4": "text-xl font-bold",
+      "body": "text-base font-normal leading-relaxed",
+      "label": "text-xs font-bold uppercase tracking-[0.2em]"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing, Mobile-First Swiss Grid, Hard Edges",
+    "container_padding": "p-6",
+    "gap_small": "gap-4",
+    "gap_large": "gap-8",
+    "border_radius": "rounded-none"
+  },
+  "component_styling": {
+    "button_primary": "bg-primary flex-row justify-center items-center px-6 py-4 rounded-none border-2 border-border active:opacity-80",
+    "button_primary_text": "text-primary_foreground font-bold text-lg",
+    "card": "bg-surface p-6 rounded-none border-2 border-border",
+    "input": "bg-background border-2 border-border p-4 text-base font-medium rounded-none text-text_primary",
+    "bottom_nav": "bg-background border-t-2 border-border py-4 px-6 flex-row justify-between items-center",
+    "drawer": "bg-surface w-4/5 h-full border-r-2 border-border p-6",
+    "badge_present": "bg-success px-2 py-1 border border-border rounded-none",
+    "badge_present_text": "text-success_foreground text-xs font-bold uppercase",
+    "badge_absent": "bg-danger px-2 py-1 border border-border rounded-none",
+    "badge_absent_text": "text-danger_foreground text-xs font-bold uppercase",
+    "badge_late": "bg-warning px-2 py-1 border border-border rounded-none",
+    "badge_late_text": "text-warning_foreground text-xs font-bold uppercase"
+  },
+  "screens": {
+    "onboarding": {
+      "layout": "Full screen background image with heavy overlay (bg-black/60). Stark white massive typography (H1). Role selection buttons (Admin, Trainer, Student) stacked vertically with high contrast.",
+      "interactions": "Google Sign-in button prominently displayed. Fade-in stagger for role buttons."
+    },
+    "dashboard_admin": {
+      "layout": "Bento grid approach. Top: High contrast KPI cards (Overall Attendance %, Total Revenue). Middle: Scrollable list of Centers/Trainers. Bottom: Feedback trend mini-chart.",
+      "features": "Multi-center toggle in the header. Hard borders separating sections."
+    },
+    "dashboard_trainer": {
+      "layout": "Control room style. Top: Today's Schedule (Hero block). Middle: Quick actions (Mark Attendance, Collect Payment). Bottom: Students list with recent feedback.",
+      "features": "Attendance summary progress bar with sharp edges."
+    },
+    "dashboard_student": {
+      "layout": "Personalized, clear. Top: Attendance streak (Massive number). Middle: Next session details. Bottom: Payment status (Due/Paid) in high-contrast alert box.",
+      "features": "QR Code / PIN entry button highly prominent for self-attendance."
+    },
+    "attendance_marking": {
+      "layout": "List view. Each row has student name and 3 sharp toggle buttons (P, A, L). Bulk action 'Mark All Present' floating at bottom.",
+      "features": "Swipe left to mark absent, swipe right for present."
+    },
+    "payments": {
+      "layout": "Subscription plan cards with heavy borders. Payment history as a dense data table. 'Pay via Stripe' primary CTA.",
+      "features": "Stripe integration checkout flow."
+    },
+    "feedback": {
+      "layout": "Post-session rating. Huge star icons. Categorized sliders (Quality, Punctuality). Text area for comments.",
+      "features": "Submit button sticks to keyboard."
+    },
+    "scheduling": {
+      "layout": "Calendar view. Hard-lined grid for days. Sessions appear as color-coded blocks (no rounded corners).",
+      "features": "Tap day to expand sessions in a bottom sheet."
+    },
+    "profile": {
+      "layout": "Header with avatar. Dense list of info (Age, Goals, Credentials). Language switcher (English/Tamil) toggle prominent.",
+      "features": "Dark mode toggle switch."
+    }
+  },
+  "media_urls": {
+    "onboarding_background": {
+      "url": "https://images.pexels.com/photos/13451904/pexels-photo-13451904.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Male and female fitness trainers posing in a modern gym setting"
+    },
+    "student_placeholder": {
+      "url": "https://images.unsplash.com/photo-1581726707445-75cbe4efc586?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwyfHxzdHVkZW50JTIwY2xhc3Nyb29tJTIwbGVhcm5pbmd8ZW58MHx8fHwxNzgxNDM1OTYyfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Boy in black hoodie sitting on chair"
+    },
+    "trainer_placeholder": {
+      "url": "https://images.unsplash.com/photo-1738523686534-7055df5858d6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwyfHxwZXJzb25hbCUyMHRyYWluZXIlMjBneW18ZW58MHx8fHwxNzgxNDM1OTYyfDA&ixlib=rb-4.1.0&q=85",
+      "description": "A man and a woman working out in a gym"
+    }
+  },
+  "micro_interactions": {
+    "hover_active": "Scale down slightly (scale-95) on press. Background color darkens.",
+    "skeleton_loading": "Sharp rectangular grey blocks shimmering.",
+    "toast_notifications": "Hard-edged toast sliding from top with a stark black/white contrast."
+  },
+  "instructions_to_main_agent": [
+    "Use React Native + Expo with NativeWind (Tailwind for React Native) for styling.",
+    "Implement light and dark themes using NativeWind's dark mode capabilities.",
+    "Do not use generic font 'Inter' for headings. Configure 'Outfit' for headings and 'IBM Plex Sans' for body text via expo-font.",
+    "CRITICAL: Ensure all interactive and key informational elements have a 'data-testid' attribute for testing.",
+    "Follow the 'Swiss Brutalist' styling: use 1px or 2px solid borders (border-border), remove border-radius (rounded-none), and maintain high contrast.",
+    "For Attendance and Payment lists, ensure strict alignment and dense spacing.",
+    "Bottom navigation and drawer menu should have high contrast active states with hard border separations."
+  ]
+}
